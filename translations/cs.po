@@ -43,13 +43,13 @@ msgstr "Minuty:"
 #: caffeine/assets/glade/GUI.glade:286 caffeine/main.py:314
 #: caffeine/main.py:400
 msgid "Enable Caffeine"
-msgstr "Zakázat špořič obrazovky"
+msgstr "Zakázat spořič obrazovky"
 
 #: caffeine/assets/glade/GUI.glade:301
 #, fuzzy
 #| msgid "Enable Caffeine"
 msgid "Enable Caffeine for..."
-msgstr "Zakázat špořič obrazovky"
+msgstr "Zakázat spořič obrazovky"
 
 #: caffeine/assets/glade/GUI.glade:429
 msgid "Preferences"
@@ -65,7 +65,7 @@ msgid ""
 "whenever certain programs are runnning."
 msgstr ""
 "Caffeine se může samovolně spouštět\n"
-"když běží určitém programy."
+"když běží určité programy."
 
 #: caffeine/assets/glade/GUI.glade:518
 msgid "List of programs that Caffeine activates for:"
@@ -96,7 +96,7 @@ msgstr ""
 msgid "Caffeine activates automatically when audio playback/recording is detected."
 msgstr ""
 "Caffeine se může samovolně spouštět\n"
-"když běží určitém programy."
+"když běží určité programy."
 
 #: caffeine/assets/glade/GUI.glade:691
 #, fuzzy
