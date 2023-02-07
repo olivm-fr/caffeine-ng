@@ -21,6 +21,7 @@ from threading import Timer
 from typing import List
 from typing import Literal
 from typing import Optional
+from typing import Callable
 
 from gi.repository import GLib
 from gi.repository import GObject
@@ -39,11 +40,13 @@ from caffeine.inhibitors import XorgInhibitor
 from caffeine.inhibitors import XssInhibitor
 from caffeine.procmanager import ProcManager
 from caffeine.triggers import DesiredState
+from caffeine.triggers import EventTrigger
 from caffeine.triggers import FullscreenTrigger
 from caffeine.triggers import ManualTrigger
+from caffeine.triggers import PollingTrigger
 from caffeine.triggers import PulseAudioTrigger
-from caffeine.triggers import Trigger
 from caffeine.triggers import WhiteListTrigger
+from caffeine.triggers import MPRISTrigger
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
@@ -59,6 +62,7 @@ class Caffeine(GObject.GObject):
         self,
         process_manager: ProcManager,
         process_manager_audio: ProcManager,
+        on_toggle: Callable[[], None],
         pulseaudio: bool,
         whitelist: bool,
         fullscreen: bool,
@@ -69,6 +73,7 @@ class Caffeine(GObject.GObject):
         :param whitelist: Whether whitelist support should be enabled.
         """
         GObject.GObject.__init__(self)
+        self.connect("activation-toggled", on_toggle)
 
         self.__inhibitors = [
             GnomeInhibitor(),
@@ -88,20 +93,20 @@ class Caffeine(GObject.GObject):
         self.__audio_peak_filtering_active = True
 
         self._manual_trigger = ManualTrigger()
-        self.triggers: List[Trigger] = [self._manual_trigger]
+        self.polling_triggers: List[PollingTrigger] = [self._manual_trigger]
         if whitelist:
-            self.triggers.append(WhiteListTrigger(self.__process_manager))
+            self.polling_triggers.append(WhiteListTrigger(self.__process_manager))
         if fullscreen:
-            self.triggers.append(FullscreenTrigger())
+            self.polling_triggers.append(FullscreenTrigger())
         if pulseaudio:
-            self.triggers.append(
+            self.polling_triggers.append(
                 PulseAudioTrigger(
                     process_manager=self.__process_manager_audio,
                     audio_peak_filtering_active_getter=self.get_audio_peak_filtering_active,
                 )
             )
 
-        logger.info("Running with triggers: %r.", self.triggers)
+        logger.info("Running with polling triggers: %r.", self.polling_triggers)
 
         # The initial state is uninhibited.
         self.desired_state = DesiredState.UNINHIBITED
@@ -117,29 +122,43 @@ class Caffeine(GObject.GObject):
         self.timer = None
         self.notification = None
 
+        self.polling_state = DesiredState.UNINHIBITED
+        self.event_triggers: List[EventTrigger] = [
+            MPRISTrigger(lambda: self.apply_desired_state())
+        ]
+        self.apply_desired_state()
+
         # FIXME: add capability to xdg-screensaver to report timeout.
-        GLib.timeout_add(10000, self.run_all_triggers)
+        if len(self.polling_triggers) > 0:
+            GLib.timeout_add(10000, self.run_polling_triggers)
 
         logger.info(self.status_string)
 
-    def run_all_triggers(self, show_notification=False) -> Literal[True]:
-        """Runs all triggers to determine the currently desired status."""
-        inhibit = DesiredState.UNINHIBITED
+    def run_polling_triggers(self, show_notification=False) -> Literal[True]:
+        """Runs all polling triggers to determine the currently desired status."""
+        polling_state = DesiredState.UNINHIBITED
 
-        for trigger in self.triggers:
-            inhibit = max(inhibit, trigger.run())
+        for trigger in self.polling_triggers:
+            polling_state = max(polling_state, trigger.run())
 
-            if inhibit == DesiredState.INHIBIT_ALL:
-                logger.debug("%s requested %s.", trigger, inhibit)
+            if polling_state == DesiredState.INHIBIT_ALL:
+                logger.debug("%s requested %s.", trigger, polling_state)
                 break
 
-        logger.info(f"Desired state is: {inhibit}")
-        self.desired_state = inhibit
-        self.apply_desired_status(show_notification)
+        self.polling_state = polling_state
+        self.apply_desired_state(show_notification)
 
         # Timeout will repeat indefinitely while this returns True.
-        # TODO: Some of the triggers can be event based, rather than polling.
         return True
+
+    def apply_desired_state(self, show_notification=False) -> None:
+        desired_state = max(
+            self.polling_state, *[trigger.state for trigger in self.event_triggers]
+        )
+        if self.desired_state != desired_state:
+            self.desired_state = desired_state
+            logger.info(f"Desired state is: {self.desired_state}")
+            self.apply_desired_status(show_notification)
 
     def quit(self) -> None:
         """
@@ -174,7 +193,7 @@ class Caffeine(GObject.GObject):
             self.status_string = _("Activated for ") + str(time)
 
         self.set_activated(True)
-        self.run_all_triggers()
+        self.run_polling_triggers()
 
         if show_notification:
             self._notify(message, full_cup_icon)
@@ -211,7 +230,7 @@ class Caffeine(GObject.GObject):
             self._notify(message, empty_cup_icon)
 
         self.timer = None
-        self.run_all_triggers()
+        self.run_polling_triggers()
 
     def set_activated(self, activated: bool) -> None:
         """Set manual activation to the provided value."""
@@ -238,7 +257,7 @@ class Caffeine(GObject.GObject):
         """Toggle manual inhibition."""
 
         self.set_activated(not self.get_activated())
-        self.run_all_triggers(show_notification)
+        self.run_polling_triggers(show_notification)
 
     def cancel_timer(self, note=True):
         """Cancel a running timer.
@@ -265,7 +284,7 @@ class Caffeine(GObject.GObject):
             self.timer = None
 
         # Re run all triggers...
-        self.run_all_triggers()
+        self.run_polling_triggers()
 
     def apply_desired_status(self, show_notification=False) -> None:
         """Applies the currently desired status."""

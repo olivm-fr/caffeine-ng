@@ -153,13 +153,6 @@ class GUI:
             persistence_file=get_blacklist_file_audio()
         )
 
-        self.__core = Caffeine(
-            process_manager=self.__process_manager,
-            process_manager_audio=self.__process_manager_audio,
-            **kwargs
-        )
-
-        self.__core.connect("activation-toggled", self.on_activation_toggled)
         self.ProcAdd = ProcAdd()
 
         # XXX: Do we want to change this to caffeine-ng?
@@ -173,8 +166,6 @@ class GUI:
 
         show_tray_icon = settings.get_boolean("show-tray-icon")
         show_notification = settings.get_boolean("show-notification")
-        audio_peak_filtering_active = settings.get_boolean("audio-peak-filtering")
-        self.__core.set_audio_peak_filtering_active(audio_peak_filtering_active)
 
         if not use_legacy_indicator:
             self.AppInd = AppIndicator3.Indicator.new(
@@ -214,13 +205,20 @@ class GUI:
             note.show()
 
         self.activate_menuitem = builder.get_object("activate_menuitem")
-
-        self.set_icon_is_activated(self.__core.get_activated())
+        self.__core = Caffeine(
+            process_manager=self.__process_manager,
+            process_manager_audio=self.__process_manager_audio,
+            on_toggle=self.on_activation_toggled,
+            **kwargs
+        )
 
         tooltip = self.__core.status_string
         if not tooltip:
             tooltip = _("Caffeine is dormant; powersaving is enabled")
         # self.status_icon.set_tooltip(tooltip)
+
+        audio_peak_filtering_active = settings.get_boolean("audio-peak-filtering")
+        self.__core.set_audio_peak_filtering_active(audio_peak_filtering_active)
 
         # popup menu
         self.menu = builder.get_object("popup_menu")
@@ -335,7 +333,8 @@ class GUI:
             self.status_icon.set_from_icon_name(icon_name)
 
         label = [_("Enable Caffeine"), _("Disable Caffeine")]
-        self.activate_menuitem.set_label(label[self.__core.get_activated()])
+        label_i = False if not hasattr(self, "__core") else self.__core.get_activated()
+        self.activate_menuitem.set_label(label[label_i])
 
     # Callbacks
     def on_left_click(self, status_icon, data=None):

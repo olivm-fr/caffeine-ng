@@ -6,10 +6,16 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
+from typing import Dict
+from typing import List
 
 from ewmh import EWMH
 from pulsectl import Pulse
 from pulsectl.pulsectl import PulseIndexError
+
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
 
 from caffeine import utils
 from caffeine.procmanager import ProcManager  # noqa: E402
@@ -28,8 +34,8 @@ class DesiredState(Enum):
         return NotImplemented
 
 
-class Trigger(ABC):
-    """Triggers are "sources" that indicate that inhibition is desireable."""
+class PollingTrigger(ABC):
+    """PollingTriggers are "sources" that indicate that inhibition is desireable."""
 
     @abstractmethod
     def run(self) -> DesiredState:
@@ -40,7 +46,7 @@ class Trigger(ABC):
         """
 
 
-class ManualTrigger(Trigger):
+class ManualTrigger(PollingTrigger):
     active = False
 
     def run(self) -> DesiredState:
@@ -51,21 +57,25 @@ class ManualTrigger(Trigger):
 
 
 @dataclass
-class WhiteListTrigger(Trigger):
+class WhiteListTrigger(PollingTrigger):
     process_manager: ProcManager
 
     def run(self) -> DesiredState:
         """Determine if one of the whitelisted processes is running."""
 
         for proc in self.process_manager.get_process_list():
-            if utils.is_process_running(proc):
-                logger.info("Process %s detected. Inhibiting.")
-                return DesiredState.INHIBIT_ALL
+            try:
+                if utils.is_process_running(proc):
+                    logger.info(f"Process '{proc}' detected. Inhibiting.")
+                    return DesiredState.INHIBIT_ALL
+            except Exception:
+                logger.warn(f"Error occured while polling for process '{proc}'.")
+                continue
 
         return DesiredState.UNINHIBITED
 
 
-class FullscreenTrigger(Trigger):
+class FullscreenTrigger(PollingTrigger):
     def __init__(self):
         if os.environ.get("WAYLAND_DISPLAY") is None:
             self._ewmh = EWMH()
@@ -94,7 +104,7 @@ class FullscreenTrigger(Trigger):
             return DesiredState.UNINHIBITED
 
 
-class PulseAudioTrigger(Trigger):
+class PulseAudioTrigger(PollingTrigger):
     def __init__(
         self,
         process_manager: ProcManager,
@@ -196,3 +206,115 @@ class PulseAudioTrigger(Trigger):
             return DesiredState.INHIBIT_SLEEP
         else:
             return DesiredState.UNINHIBITED
+
+
+class EventTrigger(ABC):
+    """EventTriggers are "sources" that monitor for events that may trigger inhibition."""
+
+
+class MPRISTrigger(EventTrigger):
+    def __init__(self, on_trigger: Callable[[], None], bus=None):
+        self.active_players: Dict[str, str] = {}  # dbus id -> player name
+        obj_path = "/org/mpris/MediaPlayer2"
+        prop_path = "org.freedesktop.DBus.Properties"
+        DBusGMainLoop(set_as_default=True)
+        self.session_bus = dbus.SessionBus(GLib.MainLoop())
+
+        def playback_status_changed(
+            interface_name: str,
+            changed_properties: Dict[str, str],
+            invalidated_properties: List[str],
+            bus_name: str,
+        ):
+            if interface_name != "org.mpris.MediaPlayer2.Player":
+                return
+            playback_changed = "PlaybackStatus" in changed_properties
+            playback_status = (
+                None
+                if not playback_changed
+                else str(changed_properties["PlaybackStatus"])
+            )
+            if not playback_changed:
+                return
+            match playback_status:
+                case "Playing":
+                    player_proxy = self.session_bus.get_object(
+                        bus_name, "/org/mpris/MediaPlayer2"
+                    )
+                    player_name = self.get_player_name(player_proxy)
+                    self.active_players[bus_name] = player_name
+                    logger.debug(f"Media '{player_name}' detected playing.")
+                    logger.debug(self.active_players_str())
+                case ("Paused" | "Stopped"):
+                    if bus_name in self.active_players:
+                        logger.debug(
+                            f"Media '{self.active_players[bus_name]}' playback stopped/paused."
+                        )
+                        del self.active_players[bus_name]
+                        logger.debug(self.active_players_str())
+                case _:
+                    raise Exception("That's not meant to happen...")
+            if len(self.active_players) > 0:
+                self.state = DesiredState.INHIBIT_ALL
+            else:
+                self.state = DesiredState.UNINHIBITED
+            on_trigger()
+
+        self.session_bus.add_signal_receiver(
+            handler_function=playback_status_changed,
+            signal_name="PropertiesChanged",
+            dbus_interface=prop_path,
+            bus_name=None,
+            path=obj_path,
+            sender_keyword="bus_name",
+        )
+        self.init_state()
+
+    def init_state(self):
+        self.state = DesiredState.UNINHIBITED
+        for service in self.session_bus.list_names():
+            if not service.startswith("org.mpris.MediaPlayer2."):
+                continue
+            player = dbus.SessionBus().get_object(service, "/org/mpris/MediaPlayer2")
+            status = self.get_player_status(player)
+            if status == "Playing":
+                player_name = self.get_player_name(player)
+                self.active_players[str(player.bus_name)] = player_name
+                self.state = DesiredState.INHIBIT_ALL
+                logger.debug(f"Media '{player_name}' detected playing.")
+                logger.debug(self.active_players_str())
+                break
+
+    def get_player_status(self, player: dbus.proxies.ProxyObject):
+        return str(
+            player.Get(
+                "org.mpris.MediaPlayer2.Player",
+                "PlaybackStatus",
+                dbus_interface="org.freedesktop.DBus.Properties",
+            )
+        )
+
+    def get_player_name(self, player: dbus.proxies.ProxyObject):
+        return str(
+            player.Get(
+                "org.mpris.MediaPlayer2",
+                "Identity",
+                dbus_interface="org.freedesktop.DBus.Properties",
+            )
+        )
+
+    def get_player_appid(self, player: dbus.proxies.ProxyObject):
+        return str(
+            player.Get(
+                "org.mpris.MediaPlayer2",
+                "DesktopEntry",
+                dbus_interface="org.freedesktop.DBus.Properties",
+            )
+        )
+
+    def active_players_str(self):
+        players = self.active_players.values()
+        if len(players) == 0:
+            return "No other active player detected."
+        else:
+            return f"Active players: [{', '.join(players)}]."
