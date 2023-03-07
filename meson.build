@@ -31,18 +31,9 @@ git = find_program('git', required: true)
 prefix = get_option('prefix')
 pkgdatadir = join_paths(prefix, get_option('datadir'))
 
-# TODO: use pkgdatadir=/usr/share/caffeine
-#       and only hardcode this base path into paths.py
-localedir = join_paths(prefix, get_option('localedir'))
-gladedir = join_paths(pkgdatadir, 'caffeine/glade')
-imagedir = join_paths(pkgdatadir, 'caffeine/images')
-iconsdir = join_paths(pkgdatadir, 'icons')
-
 conf_data = configuration_data({
-  'localedir': localedir,
-  'gladedir': gladedir,
-  'imagedir': imagedir,
-  'iconsdir': iconsdir,
+  'localedir': join_paths(prefix, get_option('localedir')),
+  'pkgdatadir': pkgdatadir,
 })
 
 paths_py = configure_file(
@@ -119,17 +110,17 @@ custom_target(
 )
 
 install_subdir('caffeine/assets/glade',
-  install_dir: gladedir,
+  install_dir: join_paths(pkgdatadir, 'caffeine/glade'),
   strip_directory: true,
 )
 
 install_subdir('caffeine/assets/images',
-  install_dir: imagedir,
+  install_dir: join_paths(pkgdatadir, 'caffeine/images'),
   strip_directory: true,
 )
 
 install_subdir('caffeine/assets/icons',
-  install_dir: iconsdir,
+  install_dir: join_paths(pkgdatadir, 'icons'),
   strip_directory: true,
 )
 

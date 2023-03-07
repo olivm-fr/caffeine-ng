@@ -17,9 +17,9 @@ import os
 from os.path import join
 
 LOCALE_PATH = "@localedir@"
-GLADE_PATH = "@gladedir@"
-IMAGE_PATH = "@imagedir@"
-ICON_PATH = "@iconsdir@"
+PKGDATADIR = "@pkgdatadir@"
+IMAGE_PATH = join(PKGDATADIR, "caffeine/images")
+ICON_PATH = join(PKGDATADIR, "icons")
 
 
 xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
@@ -27,7 +27,7 @@ app_config_dir = join(xdg_config_home, "caffeine")
 
 
 def get_glade_file(filename):
-    return join(GLADE_PATH, filename)
+    return join(PKGDATADIR, "caffeine/glade", filename)
 
 
 def get_whitelist_file():
