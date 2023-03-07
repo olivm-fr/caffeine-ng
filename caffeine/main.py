@@ -78,7 +78,6 @@ use_legacy_indicator = os.environ.get("CAFFEINE_LEGACY_TRAY") is not None
 
 # FIXME: this does not work for any of the cases I tried.
 def get_icon_for_process(proc_name: str):
-
     global cached_icons
     global generic
 
@@ -86,7 +85,6 @@ def get_icon_for_process(proc_name: str):
     possible_icon_names.insert(0, proc_name)
 
     for icon_name in possible_icon_names:
-
         icon_name = icon_name.split("/")[-1]
 
         # Check to see if we have loaded this already.
@@ -123,7 +121,6 @@ class ProcAdd:
         builder.connect_signals(self)
 
     def run(self):
-
         self.entry.set_text("")
 
         response = self.dialog.run()
@@ -230,7 +227,6 @@ class GUI:
         self.menu.show()
 
         if not use_legacy_indicator:
-
             self.AppInd.set_menu(self.menu)
 
         #
