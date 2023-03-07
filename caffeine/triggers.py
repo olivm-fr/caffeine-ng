@@ -165,8 +165,9 @@ class PulseAudioTrigger(Trigger):
                     system_input_muted = False
                 if (
                     not application_input.mute  # application input is not muted
-                    and application_input.name
-                    != "peak detect"  # source_output_list() also returns the object used to peak for audio playback streams
+                    # source_output_list() also returns the object used to peak
+                    # for audio playback streams. Exclude it:
+                    and application_input.name != "peak detect"
                     and not system_input_muted
                 ):
                     application_name = application_input.proplist.get(

@@ -97,7 +97,7 @@ class Caffeine(GObject.GObject):
             self.triggers.append(
                 PulseAudioTrigger(
                     process_manager=self.__process_manager_audio,
-                    audio_peak_filtering_active_getter=lambda: self.__audio_peak_filtering_active,
+                    audio_peak_filtering_active_getter=self.get_audio_peak_filtering_active,
                 )
             )
 
@@ -298,6 +298,9 @@ class Caffeine(GObject.GObject):
             self.desired_state != DesiredState.UNINHIBITED,
             self.status_string,
         )
+
+    def get_audio_peak_filtering_active(self) -> bool:
+        return self.__audio_peak_filtering_active
 
     def set_audio_peak_filtering_active(self, active: bool):
         self.__audio_peak_filtering_active = active

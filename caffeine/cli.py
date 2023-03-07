@@ -71,7 +71,8 @@ def cli(ctx, verbose):
     default=True,
     help=(
         "Inhibit when pulseaudio is in use. "
-        "Only the screensaver (i.e.: not suspension) is inhibited when audio is playing."
+        "Only the screensaver (i.e.: not suspension) is inhibited when "
+        "audio is playing."
     ),
 )
 @click.option(
