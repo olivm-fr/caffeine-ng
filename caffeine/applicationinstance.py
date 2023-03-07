@@ -23,7 +23,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-class AlreadyRunning(Exception):
+class AlreadyRunningError(Exception):
     """Raised when another instance is already running."""
 
     def __str__(self):
@@ -75,7 +75,7 @@ class ApplicationInstance:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            raise AlreadyRunning()
+            raise AlreadyRunningError()
 
         handle.seek(0)
         handle.write(str(os.getpid()))
