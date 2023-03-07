@@ -305,13 +305,13 @@ class GUI:
         if use_legacy_indicator:
             # Handle mouse clicks on status_icon
             # left click
-            self.status_icon.connect("activate", self.on_L_click)
+            self.status_icon.connect("activate", self.on_left_click)
             # right click
-            self.status_icon.connect("popup-menu", self.on_R_click)
+            self.status_icon.connect("popup-menu", self.on_right_click)
 
         builder.connect_signals(self)
 
-    def setActive(self, active: bool):
+    def set_active(self, active: bool):
         self.__core.set_activated(active)
 
     def timed_activation(self, time):
@@ -338,11 +338,11 @@ class GUI:
         self.activate_menuitem.set_label(label[self.__core.get_activated()])
 
     # Callbacks
-    def on_L_click(self, status_icon, data=None):
+    def on_left_click(self, status_icon, data=None):
         logger.info("User has clicked the Caffeine icon")
         self.toggle_activated()
 
-    def on_R_click(self, status_icon, mbutton, time, data=None):
+    def on_right_click(self, status_icon, mbutton, time, data=None):
         # popdown menu
         self.menu.show_all()
 

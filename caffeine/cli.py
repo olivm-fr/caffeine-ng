@@ -109,7 +109,7 @@ def start(
         fullscreen=fullscreen,
     )
     if activate:
-        main.setActive(True)
+        main.set_active(True)
 
     if activate and time:
         parts = time.split(":")
