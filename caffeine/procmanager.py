@@ -46,10 +46,11 @@ class ProcManager:
         self.save()
 
     def import_proc(self, filename: str) -> None:
-        for line in open(filename):
-            line = line.strip()
-            if line not in self.proc_list:
-                self.proc_list.append(line)
+        with open(filename) as file:
+            for line in file:
+                line = line.strip()
+                if line not in self.proc_list:
+                    self.proc_list.append(line)
         self.save()
 
     def save(self) -> None:

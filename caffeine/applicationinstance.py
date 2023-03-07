@@ -70,16 +70,15 @@ class ApplicationInstance:
         pid_dir = os.path.dirname(self.pid_path)
         os.makedirs(pid_dir, exist_ok=True)
 
-        handle = open(self.pid_path, "w+")
+        with open(self.pid_path, "w+") as handle:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise AlreadyRunningError()
 
-        try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise AlreadyRunningError()
-
-        handle.seek(0)
-        handle.write(str(os.getpid()))
-        handle.flush()
+            handle.seek(0)
+            handle.write(str(os.getpid()))
+            handle.flush()
 
         try:
             yield

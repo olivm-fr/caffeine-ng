@@ -24,10 +24,12 @@ logger = logging.getLogger(__name__)
 def get_process_name(pid: int) -> str:
     """Gets process name from process id."""
 
-    truncated_process_name = open("/proc/%s/status" % pid).readline()[6:-1]
+    with open("/proc/%s/status" % pid) as status:
+        truncated_process_name = status.readline()[6:-1]
     process_name = truncated_process_name
 
-    line = open("/proc/%s/cmdline" % pid).readline()
+    with open("/proc/%s/cmdline" % pid) as cmdline:
+        line = cmdline.readline()
     parts = line.split("\x00")
     for part in parts:
         cmd_name = part.split("/")[-1]
