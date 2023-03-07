@@ -18,6 +18,7 @@ import fcntl
 import logging
 import os
 from contextlib import contextmanager
+from contextlib import suppress
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,5 @@ class ApplicationInstance:
         try:
             yield
         finally:
-            try:
+            with suppress(FileExistsError):
                 os.remove(self.pid_path)
-            except FileNotFoundError:
-                pass
