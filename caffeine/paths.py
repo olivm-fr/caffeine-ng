@@ -26,13 +26,13 @@ xdg_config_home = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.co
 app_config_dir = join(xdg_config_home, "caffeine")
 
 
-def get_glade_file(filename):
+def get_glade_file(filename: str) -> str:
     return join(PKGDATADIR, "caffeine/glade", filename)
 
 
-def get_whitelist_file():
+def get_whitelist_file() -> str:
     return join(app_config_dir, "whitelist.txt")
 
 
-def get_blacklist_file_audio():
+def get_blacklist_file_audio() -> str:
     return join(app_config_dir, "audio_blacklist.txt")
