@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v4.2.0
+------
+
+- Release tarballs are now available with a ``version`` file inside of them. This
+  means that it's not longer necessary to git-clone the source repositories to
+  build a release.
+- When using release tarballs, ``git`` is not longer required.
+
 v4.1.0
 ------
 

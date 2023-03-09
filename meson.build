@@ -1,6 +1,6 @@
 project(
     'caffeine-ng',
-    version: '4.1.0',
+    version: run_command('./scripts/read_version.sh', check: true).stdout().strip(),
     meson_version: '>=0.63.0',
     default_options: [
       # The default can yield broken results.
@@ -26,8 +26,6 @@ python = pymod.find_installation('python3',
 )
 python.dependency()
 
-git = find_program('git', required: true)
-
 prefix = get_option('prefix')
 pkgdatadir = join_paths(prefix, get_option('datadir'))
 
@@ -42,16 +40,15 @@ paths_py = configure_file(
     configuration: conf_data,
 )
 
+meson.add_dist_script('./scripts/write_version_file.sh')
+
 # Cannot use vcs_tag; that file cannot be installed.
 # See: https://github.com/mesonbuild/meson/issues/4893
 version_py = configure_file(
     input: 'caffeine/version.py',
     output: 'version.py',
     configuration: configuration_data({
-      'VCS_TAG': run_command(
-        git, 'describe', '--long', '--tags', '--dirty', '--always',
-        check: true
-      ).stdout().strip()
+      'VCS_TAG': meson.project_version(),
     }),
 )
 
