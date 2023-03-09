@@ -11,7 +11,7 @@ v4.1.0
   required (neither at build time nor runtime).
 - ``ayatana-appindicator3`` will be used if present. In such scenarios,
   ``appindicator3`` is no longer required. Either one may be present. If both
-  are present, the ``ayatana-appindicator3`` is used.
+  are present then ``ayatana-appindicator3`` is used.
 - ``indicator3`` is no longer marked as a dependency. It was not actually
   used in the past either; only ``appindicator3`` was used.
 - ``scdoc`` is required to build man pages.
