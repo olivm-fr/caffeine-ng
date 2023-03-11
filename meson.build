@@ -103,7 +103,7 @@ custom_target(
 	feed: true,
 	capture: true,
 	install: true,
-	install_dir: join_paths(mandir, 'man1/caffeine')
+	install_dir: join_paths(mandir, 'man1')
 )
 
 install_subdir('caffeine/assets/glade',
