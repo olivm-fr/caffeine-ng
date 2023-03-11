@@ -5,4 +5,4 @@
 
 set -e
 
-git describe --long --tags --dirty --always 2>/dev/null || cat ./version
+git describe --tags --dirty --always 2>/dev/null || cat ./version
