@@ -66,6 +66,7 @@ class Caffeine(GObject.GObject):
         pulseaudio: bool,
         whitelist: bool,
         fullscreen: bool,
+        manually_active: bool,
     ):
         """Main caffeine worker.
 
@@ -92,11 +93,10 @@ class Caffeine(GObject.GObject):
 
         self.__audio_peak_filtering_active = True
 
-        self._manual_trigger = ManualTrigger()
-        self.polling_triggers: List[PollingTrigger] = [self._manual_trigger]
+        self.polling_triggers: List[PollingTrigger] = []
         if whitelist:
             self.polling_triggers.append(WhiteListTrigger(self.__process_manager))
-        if fullscreen:
+        if fullscreen and not os.environ.get("WAYLAND_DISPLAY"):
             self.polling_triggers.append(FullscreenTrigger())
         if pulseaudio:
             self.polling_triggers.append(
@@ -123,8 +123,12 @@ class Caffeine(GObject.GObject):
         self.notification = None
 
         self.polling_state = DesiredState.UNINHIBITED
+        self._manual_trigger = ManualTrigger(
+            self.apply_desired_state, init_state=manually_active
+        )
         self.event_triggers: List[EventTrigger] = [
-            MPRISTrigger(lambda: self.apply_desired_state())
+            MPRISTrigger(self.apply_desired_state),
+            self._manual_trigger,
         ]
         self.apply_desired_state()
 
@@ -187,13 +191,12 @@ class Caffeine(GObject.GObject):
             + str(time)
         )
 
-        logger.info("Timed activation set for " + str(time))
+        logger.info(f"Timed activation set for {time} seconds")
 
         if self.status_string == "":
             self.status_string = _("Activated for ") + str(time)
 
-        self.set_activated(True)
-        self.run_polling_triggers()
+        self._manual_trigger.set(True)
 
         if show_notification:
             self._notify(message, full_cup_icon)
@@ -216,48 +219,18 @@ class Caffeine(GObject.GObject):
     def _deactivate(self, show_notification: bool) -> None:
         """Called when the timer finished running."""
 
-        self._manual_trigger.active = False
+        self._manual_trigger.set(False)
         interval = self.timer.interval  # type: ignore
         message = str(interval) + _(" have elapsed; powersaving is re-enabled")
 
         logger.info(
-            "Timed activation period ("
-            + str(self.timer.interval)  # type: ignore
-            + ") has elapsed"
+            f"Timed activation period ({self.timer.interval} seconds) has elapsed"
         )
 
-        if show_notification:
+        if show_notification and self._manual_trigger:
             self._notify(message, empty_cup_icon)
 
         self.timer = None
-        self.run_polling_triggers()
-
-    def set_activated(self, activated: bool) -> None:
-        """Set manual activation to the provided value."""
-
-        if not activated and self.timer:
-            # If manually deactivating, cancel timers.
-            self.cancel_timer()
-
-        # Update actual status:
-        self._manual_trigger.active = activated
-
-        # Emit signal so the UI updates.
-        self.emit(
-            "activation-toggled",
-            self.desired_state != DesiredState.UNINHIBITED,
-            self.status_string,
-        )
-
-    def get_activated(self) -> bool:
-        """Returns True if inhibition was manually activated."""
-        return self._manual_trigger.active
-
-    def toggle_activated(self, show_notification=True):
-        """Toggle manual inhibition."""
-
-        self.set_activated(not self.get_activated())
-        self.run_polling_triggers(show_notification)
 
     def cancel_timer(self, note=True):
         """Cancel a running timer.
@@ -275,7 +248,7 @@ class Caffeine(GObject.GObject):
             interval: int = self.timer.interval  # type: ignore
             message = _("Timed activation cancelled (was set for ") + f"{interval})"
 
-            logger.info("Timed cancelled (was set for %d).", interval)
+            logger.info(f"Timed activation cancelled (was set for {interval} seconds).")
 
             if note:
                 self._notify(message, empty_cup_icon)

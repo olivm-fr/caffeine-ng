@@ -108,9 +108,8 @@ def start(
         pulseaudio=pulseaudio,
         whitelist=whitelist,
         fullscreen=fullscreen,
+        manually_active=activate,
     )
-    if activate:
-        main.set_active(True)
 
     if activate and time:
         parts = time.split(":")

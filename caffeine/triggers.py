@@ -45,16 +45,6 @@ class PollingTrigger(ABC):
         """
 
 
-class ManualTrigger(PollingTrigger):
-    active = False
-
-    def run(self) -> DesiredState:
-        if self.active:
-            return DesiredState.INHIBIT_ALL
-        else:
-            return DesiredState.UNINHIBITED
-
-
 @dataclass
 class WhiteListTrigger(PollingTrigger):
     process_manager: ProcManager
@@ -211,6 +201,28 @@ class EventTrigger(ABC):
     """Sources that monitor for events that may trigger inhibition."""
 
     state: DesiredState
+
+
+class ManualTrigger(EventTrigger):
+    def __init__(self, on_trigger: Callable[[], None], init_state: bool = False):
+        self.is_active = init_state
+        self.state = DesiredState.UNINHIBITED
+        self.on_trigger = on_trigger
+
+    def set(self, activated: bool) -> None:
+        """Set manual activation to the provided value."""
+
+        self.is_active = activated
+        if self.is_active:
+            self.state = DesiredState.INHIBIT_ALL
+            logger.debug("Session manually inhibited.")
+        else:
+            self.state = DesiredState.UNINHIBITED
+            logger.debug("Session manually uninhibited.")
+        self.on_trigger()
+
+    def toggle(self):
+        self.set(not self.is_active)
 
 
 class MPRISTrigger(EventTrigger):

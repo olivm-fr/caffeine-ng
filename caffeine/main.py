@@ -309,15 +309,14 @@ class GUI:
 
         builder.connect_signals(self)
 
-    def set_active(self, active: bool):
-        self.__core.set_activated(active)
-
     def timed_activation(self, time):
         self.__core.timed_activation(time)
 
     def toggle_activated(self):
         """Toggles whether screen saver prevention is active."""
-        self.__core.toggle_activated()
+        self.__core._manual_trigger.toggle()
+        if self.__core.timer is not None:
+            self.__core.cancel_timer(note=True)
 
     def on_activation_toggled(self, source, active, tooltip):
         self.set_icon_is_activated(active)
@@ -422,7 +421,7 @@ class GUI:
         self.toggle_activated()
 
         label = [_("Enable Caffeine"), _("Disable Caffeine")]
-        menuitem.set_label(label[self.__core.get_activated()])
+        menuitem.set_label(label[self.__core._manual_trigger.is_active])
 
     def on_time_menuitem_activate(self, menuitem, data=None):
         self.othertime_dialog.show_all()
@@ -459,7 +458,7 @@ class GUI:
         logger.info("Caffeine is preparing to quit")
 
         # Make sure PM and SV is uninhibited
-        self.__core.set_activated(False)
+        self.__core._manual_trigger.set(False)
         self.__core.quit()
         Gtk.main_quit()
 
