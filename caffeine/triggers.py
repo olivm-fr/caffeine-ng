@@ -211,6 +211,8 @@ class PulseAudioTrigger(PollingTrigger):
 class EventTrigger(ABC):
     """EventTriggers are "sources" that monitor for events that may trigger inhibition."""
 
+    state: DesiredState
+
 
 class MPRISTrigger(EventTrigger):
     def __init__(self, on_trigger: Callable[[], None], bus=None):
