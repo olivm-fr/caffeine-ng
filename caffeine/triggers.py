@@ -208,7 +208,7 @@ class PulseAudioTrigger(PollingTrigger):
 
 
 class EventTrigger(ABC):
-    """EventTriggers are "sources" that monitor for events that may trigger inhibition."""
+    """Sources that monitor for events that may trigger inhibition."""
 
     state: DesiredState
 
@@ -249,7 +249,8 @@ class MPRISTrigger(EventTrigger):
                 case ("Paused" | "Stopped"):
                     if bus_name in self.active_players:
                         logger.debug(
-                            f"Media '{self.active_players[bus_name]}' playback stopped/paused."
+                            "Media '%s' playback stopped/paused.",
+                            self.active_players[bus_name],
                         )
                         del self.active_players[bus_name]
                         logger.debug(self.active_players_str())
