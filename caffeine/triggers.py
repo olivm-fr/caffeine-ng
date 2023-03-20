@@ -9,13 +9,12 @@ from typing import Callable
 from typing import Dict
 from typing import List
 
-from ewmh import EWMH
-from pulsectl import Pulse
-from pulsectl.pulsectl import PulseIndexError
-
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
+from ewmh import EWMH
 from gi.repository import GLib
+from pulsectl import Pulse
+from pulsectl.pulsectl import PulseIndexError
 
 from caffeine import utils
 from caffeine.procmanager import ProcManager  # noqa: E402

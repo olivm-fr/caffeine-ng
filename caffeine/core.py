@@ -18,10 +18,10 @@ import logging
 import os.path
 from gettext import gettext as _
 from threading import Timer
+from typing import Callable
 from typing import List
 from typing import Literal
 from typing import Optional
-from typing import Callable
 
 from gi.repository import GLib
 from gi.repository import GObject
@@ -43,10 +43,10 @@ from caffeine.triggers import DesiredState
 from caffeine.triggers import EventTrigger
 from caffeine.triggers import FullscreenTrigger
 from caffeine.triggers import ManualTrigger
+from caffeine.triggers import MPRISTrigger
 from caffeine.triggers import PollingTrigger
 from caffeine.triggers import PulseAudioTrigger
 from caffeine.triggers import WhiteListTrigger
-from caffeine.triggers import MPRISTrigger
 
 os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
