@@ -110,6 +110,7 @@ class Caffeine(GObject.GObject):
 
         # The initial state is uninhibited.
         self.desired_state = DesiredState.UNINHIBITED
+        self.reason = ""
 
         # Status string (XXX: Let's double check how well this is working).
         self.status_string = "Caffeine is starting up..."
@@ -159,10 +160,23 @@ class Caffeine(GObject.GObject):
         desired_state = max(
             self.polling_state, *[trigger.state for trigger in self.event_triggers]
         )
+        reason = self.get_reason()
         if self.desired_state != desired_state:
             self.desired_state = desired_state
+            self.reason = reason
             logger.info(f"Desired state is: {self.desired_state}")
             self.apply_desired_status(show_notification)
+        elif self.reason != reason:
+            self.reason = reason
+            self.apply_desired_status(show_notification=False)
+
+    def get_reason(self):
+        reason = self._manual_trigger.reason
+        for t in (*self.polling_triggers, *self.event_triggers):
+            if not reason:
+                return reason
+            reason = t.reason
+        return reason
 
     def quit(self) -> None:
         """
@@ -268,23 +282,24 @@ class Caffeine(GObject.GObject):
             DesiredState.INHIBIT_SLEEP,
             DesiredState.INHIBIT_ALL,
         )
-        inhibit_screen = self.desired_state == DesiredState.INHIBIT_ALL
+        inhibit_all = self.desired_state == DesiredState.INHIBIT_ALL
 
         for inhibitor in self.__inhibitors:
             if inhibitor.applicable:
                 if inhibitor.is_screen_inhibitor:
-                    inhibitor.set(inhibit_screen)
+                    inhibitor.set(inhibit_all, self.reason)
                 else:
-                    inhibitor.set(inhibit_sleep)
+                    inhibitor.set(inhibit_sleep, self.reason)
 
                 logger.info(f"{inhibitor} is applicable, state: {inhibitor.running}")
 
-        if self.desired_state != DesiredState.UNINHIBITED:
-            self.status_string = _("Caffeine is dormant; powersaving is enabled.")
-        if self.desired_state != DesiredState.INHIBIT_SLEEP:
-            self.status_string = _("Caffeine is preventing sleep only.")
-        else:
-            self.status_string = _("Caffeine is preventing all powersaving.")
+        match self.desired_state:
+            case DesiredState.UNINHIBITED:
+                self.status_string = _("Caffeine is dormant; powersaving is enabled.")
+            case DesiredState.INHIBIT_SLEEP:
+                self.status_string = _("Caffeine is preventing sleep only.")
+            case DesiredState.INHIBIT_ALL:
+                self.status_string = _("Caffeine is preventing all powersaving.")
 
         # Emit signal so the UI updates.
         self.emit(
