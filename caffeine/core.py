@@ -220,12 +220,14 @@ class Caffeine(GObject.GObject):
         """Called when the timer finished running."""
 
         self._manual_trigger.set(False)
-        interval = self.timer.interval  # type: ignore
+
+        if not self.timer:
+            logger.warn("Timer deactivated but not timer running.")
+            return
+        interval = self.timer.interval
         message = str(interval) + _(" have elapsed; powersaving is re-enabled")
 
-        logger.info(
-            f"Timed activation period ({self.timer.interval} seconds) has elapsed"
-        )
+        logger.info(f"Timed activation period ({interval} seconds) has elapsed")
 
         if show_notification and self._manual_trigger:
             self._notify(message, empty_cup_icon)
