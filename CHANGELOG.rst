@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v4.3.0
+------
+
+- An MPRIS-based trigger is not available. This will set caffeine to inhibit
+  based on the state of a currently running media player.
+
 v4.2.0
 ------
 
