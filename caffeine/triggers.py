@@ -33,8 +33,14 @@ class DesiredState(Enum):
         return NotImplemented
 
 
-class PollingTrigger(ABC):
-    """PollingTriggers are "sources" that indicate that inhibition is desireable."""
+class Trigger(ABC):
+    """Sources that indicate that inhibition is desireable."""
+
+    reason: str
+
+
+class PollingTrigger(Trigger):
+    """Triggers that need to be checked every once in a while in order"""
 
     @abstractmethod
     def run(self) -> DesiredState:
@@ -47,7 +53,9 @@ class PollingTrigger(ABC):
 
 @dataclass
 class WhiteListTrigger(PollingTrigger):
-    process_manager: ProcManager
+    def __init__(self, process_manager: ProcManager):
+        self.process_manager = process_manager
+        self.reason = ""
 
     def run(self) -> DesiredState:
         """Determine if one of the whitelisted processes is running."""
@@ -55,12 +63,14 @@ class WhiteListTrigger(PollingTrigger):
         for proc in self.process_manager.get_process_list():
             try:
                 if utils.is_process_running(proc):
-                    logger.info(f"Process '{proc}' detected. Inhibiting.")
+                    self.reason = f"Process '{proc}' detected"
+                    logger.info(self.reason)
                     return DesiredState.INHIBIT_ALL
             except Exception:
                 logger.warn(f"Error occured while polling for process '{proc}'.")
                 continue
 
+        self.reason = ""
         return DesiredState.UNINHIBITED
 
 
@@ -71,6 +81,7 @@ class FullscreenTrigger(PollingTrigger):
         else:
             logger.info("Running on Wayland; fullscreen trigger won't work.")
             self._ewmh = None
+        self.reason = ""
 
     def run(self) -> DesiredState:
         """Determine if a fullscreen application is running."""
@@ -87,9 +98,11 @@ class FullscreenTrigger(PollingTrigger):
                 inhibit = "_NET_WM_STATE_FULLSCREEN" in wm_state
 
         if inhibit:
-            logger.info("Fullscreen window detected.")
+            self.reason = "Fullscreen window detected"
+            logger.info(self.reason)
             return DesiredState.INHIBIT_ALL
         else:
+            self.reason = ""
             return DesiredState.UNINHIBITED
 
 
@@ -101,6 +114,7 @@ class PulseAudioTrigger(PollingTrigger):
     ) -> None:
         self.__process_manager = process_manager
         self.__audio_peak_filtering_active_getter = audio_peak_filtering_active_getter
+        self.reason = ""
 
     @property
     def __audio_peak_filtering_active(self) -> bool:
@@ -188,16 +202,19 @@ class PulseAudioTrigger(PollingTrigger):
                     active_applications.append(application_name)
 
         if screen_relevant_procs > 0:
-            logger.debug(f"Video playback detected ({', '.join(active_applications)}).")
+            self.reason = f"Video playback detected: {', '.join(active_applications)}"
+            logger.debug(self.reason)
             return DesiredState.INHIBIT_ALL
         elif music_procs > 0:
-            logger.debug(f"Audio playback detected ({', '.join(active_applications)}).")
+            self.reason = f"Audio playback detected: {', '.join(active_applications)}"
+            logger.debug(self.reason)
             return DesiredState.INHIBIT_SLEEP
         else:
+            self.reason = ""
             return DesiredState.UNINHIBITED
 
 
-class EventTrigger(ABC):
+class EventTrigger(Trigger):
     """Sources that monitor for events that may trigger inhibition."""
 
     state: DesiredState
@@ -208,6 +225,7 @@ class ManualTrigger(EventTrigger):
         self.is_active = init_state
         self.state = DesiredState.UNINHIBITED
         self.on_trigger = on_trigger
+        self.reason = ""
 
     def set(self, activated: bool) -> None:
         """Set manual activation to the provided value."""
@@ -215,10 +233,12 @@ class ManualTrigger(EventTrigger):
         self.is_active = activated
         if self.is_active:
             self.state = DesiredState.INHIBIT_ALL
-            logger.debug("Session manually inhibited.")
+            self.reason = "Session manually inhibited"
+            logger.debug(self.reason)
         else:
             self.state = DesiredState.UNINHIBITED
-            logger.debug("Session manually uninhibited.")
+            self.reason = ""
+            logger.debug("Session manually uninhibited")
         self.on_trigger()
 
     def toggle(self):
@@ -228,6 +248,8 @@ class ManualTrigger(EventTrigger):
 class MPRISTrigger(EventTrigger):
     def __init__(self, on_trigger: Callable[[], None], bus=None):
         self.active_players: Dict[str, str] = {}  # dbus id -> player name
+        self.reason = ""
+
         obj_path = "/org/mpris/MediaPlayer2"
         prop_path = "org.freedesktop.DBus.Properties"
         DBusGMainLoop(set_as_default=True)
@@ -256,6 +278,7 @@ class MPRISTrigger(EventTrigger):
                     )
                     player_name = self.get_player_name(player_proxy)
                     self.active_players[bus_name] = player_name
+                    self.reason = self.get_reason()
                     logger.debug(f"Media '{player_name}' detected playing.")
                     logger.debug(self.active_players_str())
                 case ("Paused" | "Stopped"):
@@ -266,6 +289,7 @@ class MPRISTrigger(EventTrigger):
                         )
                         del self.active_players[bus_name]
                         logger.debug(self.active_players_str())
+                        self.reason = self.get_reason()
                 case _:
                     raise Exception("That's not meant to happen...")
             if len(self.active_players) > 0:
@@ -295,6 +319,7 @@ class MPRISTrigger(EventTrigger):
                 player_name = self.get_player_name(player)
                 self.active_players[str(player.bus_name)] = player_name
                 self.state = DesiredState.INHIBIT_ALL
+                self.reason = self.get_reason()
                 logger.debug(f"Media '{player_name}' detected playing.")
                 logger.debug(self.active_players_str())
                 break
@@ -331,4 +356,10 @@ class MPRISTrigger(EventTrigger):
         if len(players) == 0:
             return "No other active player detected."
         else:
-            return f"Active players: [{', '.join(players)}]."
+            return f"Active players: [{', '.join(players)}]"
+
+    def get_reason(self):
+        players = self.active_players.values()
+        if len(players) == 0:
+            return ""
+        return f"Media detected playing: {', '.join(players)}"
