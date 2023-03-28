@@ -171,12 +171,10 @@ class Caffeine(GObject.GObject):
             self.apply_desired_status(show_notification=False)
 
     def get_reason(self):
-        reason = self._manual_trigger.reason
-        for t in (*self.polling_triggers, *self.event_triggers):
-            if not reason:
-                return reason
-            reason = t.reason
-        return reason
+        for t in (self._manual_trigger, *self.polling_triggers, *self.event_triggers):
+            if t.reason:
+                return t.reason
+        return t.reason
 
     def quit(self) -> None:
         """
