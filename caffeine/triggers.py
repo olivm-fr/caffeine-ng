@@ -246,7 +246,10 @@ class ManualTrigger(EventTrigger):
 
 
 class MPRISTrigger(EventTrigger):
-    def __init__(self, on_trigger: Callable[[], None], bus=None):
+    def __init__(
+        self, on_trigger: Callable[[], None], process_manager: ProcManager, bus=None
+    ):
+        self.ignored_applications = process_manager.get_process_list()
         self.active_players: Dict[str, str] = {}  # dbus id -> player name
         self.reason = ""
 
@@ -276,10 +279,15 @@ class MPRISTrigger(EventTrigger):
                     player_proxy = self.session_bus.get_object(
                         bus_name, "/org/mpris/MediaPlayer2"
                     )
+                    app_id = self.get_player_appid(player_proxy)
+                    if app_id in self.ignored_applications:
+                        return
                     player_name = self.get_player_name(player_proxy)
                     self.active_players[bus_name] = player_name
                     self.reason = self.get_reason()
-                    logger.debug(f"Media '{player_name}' detected playing.")
+                    logger.debug(
+                        f"Media '{player_name}' detected playing (process: {app_id})."
+                    )
                     logger.debug(self.active_players_str())
                 case ("Paused" | "Stopped"):
                     if bus_name in self.active_players:
