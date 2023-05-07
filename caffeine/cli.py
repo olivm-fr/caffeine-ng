@@ -48,12 +48,6 @@ def cli(ctx, verbose):
     help="Immediately re-enable power management and screen saving.",
 )
 @click.option(
-    "--kill",
-    "-k",
-    is_flag=True,
-    help="Kill any running instance of caffeine.",
-)
-@click.option(
     "--time",
     "-t",
     # XXX: There's a param issing to make this take values.
@@ -90,7 +84,6 @@ def start(
     app: ApplicationInstance,
     activate: bool,
     deactivate: bool,
-    kill: bool,
     time: str,
     preferences: bool,
     pulseaudio: bool,
@@ -98,9 +91,7 @@ def start(
     fullscreen: bool,
 ):
     """Start caffeine."""
-    if kill:
-        app.kill()
-    elif app.is_running():
+    if app.is_running():
         raise click.ClickException("Caffeine is already running.")
 
     main = GUI(
@@ -129,16 +120,6 @@ def start(
 
     with app.pid_file():
         main.run()
-
-
-@cli.command()
-@click.pass_obj
-def kill(app: ApplicationInstance):
-    """Kill any running instances of caffeine and exit."""
-    if app.is_running():
-        app.kill()
-    else:
-        raise click.ClickException("Caffeine is not running.")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,11 @@ v4.3.0
 
 - An MPRIS-based trigger is not available. This will set caffeine to inhibit
   based on the state of a currently running media player.
+- ``caffeine kill`` and `caffeine start --kill`` been removed. You can Quit
+  caffeine via the tray icon menu. These commands are redundant, there's plenty
+  of ways to find and kill a process (e.g.: ``ps aux | grep caffeine`` and
+  ``kill``). Your service manager likely offers some mechanism to stop and
+  restart the service too.
 
 v4.2.0
 ------

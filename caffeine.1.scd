@@ -8,7 +8,6 @@ caffeine - utility to temporarily disable (inhibit) screensavers
 
 *caffeine*++
 *caffeine* _start_ Starts caffeine++
-*caffeine* _kill_ Kills a running caffeine instance
 
 # DESCRIPTION
 
@@ -21,11 +20,6 @@ dimming, and sceenlockers will be temporarily disabled (also referred to as
 *start*
 	Runs caffeine and shows a tray icon. This is the default when no command
 	is specified.
-
-*kill*
-	Kills a running caffeine instance. May not work between different major
-	versions (e.g.: v3 and v4). Be sure to stop before updating. Otherwise
-	the old version will continue running until the next reboot / logout.
 
 # INTEGRATIONS
 
