@@ -216,7 +216,7 @@ class Caffeine(GObject.GObject):
         # and deactivate after time has passed.
         # Stop already running timer
         if self.timer:
-            interval = self.timer.interval  # type: ignore
+            interval = self.timer.interval
             logger.info(
                 "Previous timed activation cancelled due to a "
                 "second timed activation request "
@@ -259,7 +259,7 @@ class Caffeine(GObject.GObject):
         # cancel the timer for timed activation.
 
         if self.timer is not None:
-            interval: int = self.timer.interval  # type: ignore
+            interval: int = self.timer.interval
             message = _("Timed activation cancelled (was set for ") + f"{interval})"
 
             logger.info(f"Timed activation cancelled (was set for {interval} seconds).")
