@@ -12,6 +12,11 @@ v4.3.0
   of ways to find and kill a process (e.g.: ``ps aux | grep caffeine`` and
   ``kill``). Your service manager likely offers some mechanism to stop and
   restart the service too.
+- The "single instance" logic has been dropped. It adds needless complexity and
+  adds no real value. Service managers can ensure that only one instance is
+  running at any given time. Normal usages just run caffeine once at session
+  start up. For the uncommon scenario where a user might have multiple sessions
+  at once, this allows running one caffeine session for each session.
 
 v4.2.0
 ------

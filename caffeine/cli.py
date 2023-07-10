@@ -6,7 +6,6 @@ import click
 from setproctitle import setproctitle
 
 from caffeine import __version__
-from caffeine.applicationinstance import ApplicationInstance
 from caffeine.main import GUI
 
 logger = logging.getLogger(__name__)
@@ -27,8 +26,6 @@ def cli(ctx, verbose):
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
         logger.debug("Running with --verbose.")
-
-    ctx.obj = ApplicationInstance("caffeine-ng")
 
     if not ctx.invoked_subcommand:
         ctx.invoke(cli.commands["start"])
@@ -79,9 +76,7 @@ def cli(ctx, verbose):
     default=True,
     help="Inhibit when a fullscreen application is detected.",
 )
-@click.pass_obj
 def start(
-    app: ApplicationInstance,
     activate: bool,
     deactivate: bool,
     time: str,
@@ -91,9 +86,6 @@ def start(
     fullscreen: bool,
 ):
     """Start caffeine."""
-    if app.is_running():
-        raise click.ClickException("Caffeine is already running.")
-
     main = GUI(
         show_preferences=preferences,
         pulseaudio=pulseaudio,
@@ -118,8 +110,7 @@ def start(
     if preferences:
         main.window.show_all()
 
-    with app.pid_file():
-        main.run()
+    main.run()
 
 
 if __name__ == "__main__":

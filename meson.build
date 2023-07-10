@@ -55,7 +55,6 @@ version_py = configure_file(
 py_sources = [
     'caffeine/__init__.py',
     'caffeine/__main__.py',
-    'caffeine/applicationinstance.py',
     'caffeine/cli.py',
     'caffeine/core.py',
     'caffeine/icons.py',
