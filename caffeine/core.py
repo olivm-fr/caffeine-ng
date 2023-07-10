@@ -170,7 +170,7 @@ class Caffeine(GObject.GObject):
             self.reason = reason
             self.apply_desired_status(show_notification=False)
 
-    def get_reason(self):
+    def get_reason(self) -> str:
         for t in (self._manual_trigger, *self.polling_triggers, *self.event_triggers):
             if t.reason:
                 return t.reason
@@ -246,7 +246,7 @@ class Caffeine(GObject.GObject):
 
         self.timer = None
 
-    def cancel_timer(self, note=True):
+    def cancel_timer(self, note=True) -> None:
         """Cancel a running timer.
 
         This cancellation is due to user interaction, generally, toggling a
@@ -259,7 +259,7 @@ class Caffeine(GObject.GObject):
         # cancel the timer for timed activation.
 
         if self.timer is not None:
-            interval: int = self.timer.interval
+            interval: float = self.timer.interval
             message = _("Timed activation cancelled (was set for ") + f"{interval})"
 
             logger.info(f"Timed activation cancelled (was set for {interval} seconds).")
