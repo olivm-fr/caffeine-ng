@@ -7,7 +7,7 @@ caffeine - utility to temporarily disable (inhibit) screensavers
 # SYNOPSIS
 
 *caffeine*++
-*caffeine* _start_ Starts caffeine++
+*caffeine* _start_ Starts caffeine
 
 # DESCRIPTION
 
