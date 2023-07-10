@@ -320,7 +320,10 @@ class GUI:
 
     def on_activation_toggled(self, source, active, tooltip):
         self.set_icon_is_activated(active)
-        # self.status_icon.set_tooltip(tooltip)
+        if use_legacy_indicator:
+            self.status_icon.set_tooltip(tooltip)
+        else:
+            self.AppInd.set_title(tooltip)
 
     def set_icon_is_activated(self, activated):
         # toggle the icon, indexing with a bool.
