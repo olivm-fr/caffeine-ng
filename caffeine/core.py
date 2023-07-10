@@ -299,6 +299,9 @@ class Caffeine(GObject.GObject):
             case DesiredState.INHIBIT_ALL:
                 self.status_string = _("Caffeine is preventing all powersaving.")
 
+        if self.desired_state != DesiredState.UNINHIBITED:
+            self.status_string = self.status_string + "\n" + self.reason
+
         # Emit signal so the UI updates.
         self.emit(
             "activation-toggled",
