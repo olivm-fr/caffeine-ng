@@ -82,7 +82,7 @@ configure_file(
 
 install_data(
   'share/applications/caffeine.desktop',
-  install_dir: '/etc/xdg/autostart',
+  install_dir: join_paths(get_option('sysconfdir'), 'xdg/autostart'),
 )
 
 install_data(
