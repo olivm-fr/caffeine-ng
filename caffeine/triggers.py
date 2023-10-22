@@ -252,85 +252,109 @@ class MPRISTrigger(EventTrigger):
         self.ignored_applications = process_manager.get_process_list()
         self.active_players: Dict[str, str] = {}  # dbus id -> player name
         self.reason = ""
+        self.on_trigger = on_trigger
 
-        obj_path = "/org/mpris/MediaPlayer2"
-        prop_path = "org.freedesktop.DBus.Properties"
         DBusGMainLoop(set_as_default=True)
         self.session_bus = dbus.SessionBus(GLib.MainLoop())
-
-        def playback_status_changed(
-            interface_name: str,
-            changed_properties: Dict[str, str],
-            invalidated_properties: List[str],
-            bus_name: str,
-        ):
-            if interface_name != "org.mpris.MediaPlayer2.Player":
-                return
-            playback_changed = "PlaybackStatus" in changed_properties
-            playback_status = (
-                None
-                if not playback_changed
-                else str(changed_properties["PlaybackStatus"])
-            )
-            if not playback_changed:
-                return
-            match playback_status:
-                case "Playing":
-                    player_proxy = self.session_bus.get_object(
-                        bus_name, "/org/mpris/MediaPlayer2"
-                    )
-                    app_id = self.get_player_appid(player_proxy)
-                    if app_id in self.ignored_applications:
-                        return
-                    player_name = self.get_player_name(player_proxy)
-                    self.active_players[bus_name] = player_name
-                    self.reason = self.get_reason()
-                    logger.debug(
-                        f"Media '{player_name}' detected playing (process: {app_id})."
-                    )
-                    logger.debug(self.active_players_str())
-                case ("Paused" | "Stopped"):
-                    if bus_name in self.active_players:
-                        logger.debug(
-                            "Media '%s' playback stopped/paused.",
-                            self.active_players[bus_name],
-                        )
-                        del self.active_players[bus_name]
-                        logger.debug(self.active_players_str())
-                        self.reason = self.get_reason()
-                case _:
-                    raise Exception("That's not meant to happen...")
-            if len(self.active_players) > 0:
-                self.state = DesiredState.INHIBIT_ALL
-            else:
-                self.state = DesiredState.UNINHIBITED
-            on_trigger()
+        self.xdg_bus = self.session_bus.get_object(
+            bus_name="org.freedesktop.DBus", object_path="/org/freedesktop/DBus"
+        )
 
         self.session_bus.add_signal_receiver(
-            handler_function=playback_status_changed,
+            handler_function=self._playback_status_changed,
             signal_name="PropertiesChanged",
-            dbus_interface=prop_path,
+            dbus_interface="org.freedesktop.DBus.Properties",
             bus_name=None,
-            path=obj_path,
+            path="/org/mpris/MediaPlayer2",
             sender_keyword="bus_name",
         )
-        self.init_state()
 
-    def init_state(self):
         self.state = DesiredState.UNINHIBITED
         for service in self.session_bus.list_names():
             if not service.startswith("org.mpris.MediaPlayer2."):
                 continue
-            player = dbus.SessionBus().get_object(service, "/org/mpris/MediaPlayer2")
+            player = self.session_bus.get_object(service, "/org/mpris/MediaPlayer2")
             status = self.get_player_status(player)
             if status == "Playing":
-                player_name = self.get_player_name(player)
-                self.active_players[str(player.bus_name)] = player_name
-                self.state = DesiredState.INHIBIT_ALL
-                self.reason = self.get_reason()
-                logger.debug(f"Media '{player_name}' detected playing.")
-                logger.debug(self.active_players_str())
-                break
+                self._add_player(
+                    str(player.bus_name), player, trigger=False
+                )  # on_trigger() may not callable yet on MPRISTrigger construction
+
+    def _playback_status_changed(
+        self,
+        interface_name: str,
+        changed_properties: Dict[str, str],
+        invalidated_properties: List[str],
+        bus_name: str,
+    ):
+        if (
+            interface_name != "org.mpris.MediaPlayer2.Player"
+            or "PlaybackStatus" not in changed_properties
+        ):
+            return
+        playback_status = str(changed_properties["PlaybackStatus"])
+        match playback_status:
+            case "Playing":
+                self._add_player(bus_name)
+            case ("Paused" | "Stopped"):
+                if bus_name in self.active_players:
+                    self._remove_player(bus_name)
+            case _:
+                raise Exception("That's not meant to happen...")
+
+    def update(self, trigger):
+        self.reason = self.get_reason()
+        if len(self.active_players) > 0:
+            self.state = DesiredState.INHIBIT_ALL
+        else:
+            self.state = DesiredState.UNINHIBITED
+        if trigger:
+            self.on_trigger()
+
+    def _add_player(self, bus_name: str, player_proxy=None, trigger=True):
+        if player_proxy is None:
+            player_proxy = self.session_bus.get_object(
+                bus_name, "/org/mpris/MediaPlayer2"
+            )
+        player_name = self.get_player_name(player_proxy)
+        process_name = self.get_player_appid(player_proxy)
+        if process_name in self.ignored_applications:
+            logger.debug(
+                f"Blacklisted media '{player_name}' detected playing"
+                + f" (process: {process_name}). Skipping!"
+            )
+            return
+        self.active_players[bus_name] = player_name
+        self._remove_if_closed(bus_name)
+        logger.debug(
+            f"Media '{player_name}' detected playing"
+            + f" (process: {self.get_player_appid(player_proxy)})."
+        )
+        logger.debug(self.active_players_str())
+        self.update(trigger)
+
+    def _remove_if_closed(self, bus_name: str):
+        self.xdg_bus.connect_to_signal(
+            signal_name="NameOwnerChanged",
+            handler_function=lambda bus_name, old_owner, new_owner: self._remove_player(
+                bus_name
+            ),
+            dbus_interface="org.freedesktop.DBus",
+            arg0=bus_name,  # e.g. 'org.mpris.MediaPlayer2.spotify',
+            arg2="",  # new_owner
+        )
+
+    def _remove_player(self, bus_name: str):
+        if bus_name not in self.active_players:
+            # sometimes, due to async calls, this method is called after
+            # self.active_players was already updated
+            return
+        logger.debug(
+            "Media '%s' playback stopped/paused/closed.", self.active_players[bus_name]
+        )
+        del self.active_players[bus_name]
+        logger.debug(self.active_players_str())
+        self.update(trigger=True)
 
     def get_player_status(self, player: dbus.proxies.ProxyObject):
         return str(

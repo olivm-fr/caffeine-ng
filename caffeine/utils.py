@@ -51,11 +51,11 @@ def get_processes() -> Generator[str, None, None]:
 
         try:
             process_name = get_process_name(num_pid).lower()
+            yield process_name
+        except FileNotFoundError:
+            pass
         except Exception:
             logger.exception(f"Failed to get name for process {num_pid}")
-            continue
-
-        yield process_name
 
 
 def is_process_running(name: str) -> bool:
