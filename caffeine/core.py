@@ -128,7 +128,9 @@ class Caffeine(GObject.GObject):
             self.apply_desired_state, init_state=manually_active
         )
         self.event_triggers: List[EventTrigger] = [
-            MPRISTrigger(self.apply_desired_state),
+            MPRISTrigger(
+                self.apply_desired_state, process_manager=self.__process_manager_audio
+            ),
             self._manual_trigger,
         ]
         self.apply_desired_state()
