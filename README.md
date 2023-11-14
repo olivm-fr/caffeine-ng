@@ -28,7 +28,7 @@ it was undesirable.
 
 ## System requirements
 
-- Python 3.6 to 3.10 is required.
+- Python 3.6 or later is required (as of November 2023, 3.11 is known to work).
 - `caffeine-ng` works with the following screensavers / screenlockers:
   - Anything that implements the `org.freedesktop.ScreenSaver` API (this
     includes KDE, amongst others)
