@@ -26,17 +26,33 @@ it was undesirable.
 [caffeine 2.3]: http://launchpad.net/caffeine/
 [controversial]: https://bugs.launchpad.net/caffeine/+bug/1321750
 
-## System requirements
+## Requirements
 
 - Python 3.6 or later is required (as of November 2023, 3.11 is known to work).
-- `caffeine-ng` works with the following screensavers / screenlockers:
-  - Anything that implements the `org.freedesktop.ScreenSaver` API (this
-    includes KDE, amongst others)
-  - gnome-screensaver
-  - XSS
-  - Xorg + DPMS
-  - xautolock
-  - xidlehook.
+- The following Python packages (the exact name will vary across distributions).
+  - py3-click
+  - py3-dbus
+  - py3-ewmh
+  - py3-gobject3
+  - py3-pulsectl
+  - py3-setproctitle
+- Meson (only for building and installing)
+- libayatana-appindicator
+- libnotify
+- GTK+3.0
+- xdg-utils
+
+## Compatibility
+
+`caffeine-ng` works with the following screensavers / screenlockers:
+
+- Anything that implements the `org.freedesktop.ScreenSaver` API (this
+includes KDE, amongst others)
+- gnome-screensaver
+- XSS
+- Xorg + DPMS
+- xautolock
+- xidlehook.
 
 ## Installation
 
