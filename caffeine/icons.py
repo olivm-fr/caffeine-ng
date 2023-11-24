@@ -1,4 +1,4 @@
-# Copyright (c) 2014 Hugo Osvaldo Barrera
+# Copyright (c) 2014-2022 Hugo Osvaldo Barrera and contributors
 # Copyright © 2009 The Caffeine Developers
 #
 # This program is free software: you can redistribute it and/or modify

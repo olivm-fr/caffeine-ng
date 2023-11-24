@@ -155,7 +155,7 @@ To generate the `pot` file use::
 
 ## License
 
-Copyright (C) 2014-2022 Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+Copyright (C) 2014-2023 Hugo Osvaldo Barrera <hugo@whynothugo.nl>
 Copyright (C) 2009 The Caffeine Developers
 
 Caffeine-ng is distributed under the GNU General Public License, either version

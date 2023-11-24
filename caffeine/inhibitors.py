@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2022 Hugo Osvaldo Barrera <hugo@barrera.io>
+# Copyright (c) 2014-2023 Hugo Osvaldo Barrera and contributors
 #
 # SPDX-License-Identifier: GPL-3.0+
 
