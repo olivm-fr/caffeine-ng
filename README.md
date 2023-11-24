@@ -56,6 +56,10 @@ includes KDE, amongst others)
 
 ## Installation
 
+### Alpine Linux
+
+A `caffeine-ng` package is available in the testing repository.
+
 ### ArchLinux
 
 On ArchLinux, caffeine-ng is available at the [AUR][aur].
