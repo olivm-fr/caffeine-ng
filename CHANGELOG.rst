@@ -42,7 +42,7 @@ v4.1.0
 - The ``xdg``  python is no longer required. Our usage of it was trivial, and
   has been replaced with three very simple lines of code.
 
-.. _Meson for Python applications: https://hugo.barrera.io/journal/2022/07/26/meson-for-python-applications/
+.. _Meson for Python applications: https://whynothugo.nl/journal/2022/07/26/meson-for-python-applications/
 
 v4.0.1
 ------
