@@ -126,8 +126,8 @@ Gentoo users may find [caffeine-ng][gentoo-caffeine-ng] in
 
 To manually install caffeine-ng, run:
 
-      meson build
-      ninja -C build
+      meson --prefix /usr build
+      meson compile -C build
       sudo meson install -C build
       sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 
@@ -135,11 +135,6 @@ To manually install caffeine-ng, run:
 
 Generally, package manager handle running `glib-compile-schemas` themselves, so
 this doesn't need to be triggered explicitly.
-
-To install into `/usr/` rather than `/usr/local/`, instead of running `meson build`
-run `meson --prefix /usr build`.
-
-See https://mesonbuild.com/Builtin-options.html for details.
 
 ## Auto-start
 
