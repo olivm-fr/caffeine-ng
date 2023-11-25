@@ -59,11 +59,12 @@ def cli(ctx, verbose):
 )
 @click.option(
     "--pulseaudio/--no-pulseaudio",
-    default=True,
+    default=False,
     help=(
         "Inhibit when pulseaudio is in use. "
         "Only the screensaver (i.e.: not suspension) is inhibited when "
-        "audio is playing."
+        "audio is playing.\n"
+        "This option is deprecated; use the MPRIS integration instead"
     ),
 )
 @click.option(
