@@ -31,6 +31,7 @@ from caffeine.icons import empty_cup_icon
 from caffeine.icons import full_cup_icon
 from caffeine.inhibitors import DpmsInhibitor
 from caffeine.inhibitors import GnomeInhibitor
+from caffeine.inhibitors import MateScreenSaverInhibitor
 from caffeine.inhibitors import XautolockInhibitor
 from caffeine.inhibitors import XdgPowerManagmentInhibitor
 from caffeine.inhibitors import XdgScreenSaverInhibitor
@@ -86,6 +87,7 @@ class Caffeine(GObject.GObject):
             XidlehookInhibitor(),
             XdgScreenSaverInhibitor(),
             DpmsInhibitor(),
+            MateScreenSaverInhibitor(),
         ]
 
         self.__process_manager = process_manager

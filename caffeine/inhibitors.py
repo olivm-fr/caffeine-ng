@@ -96,6 +96,40 @@ class GnomeInhibitor(BaseInhibitor):
         return "org.gnome.SessionManager" in self.bus.list_names()
 
 
+class MateScreenSaverInhibitor(BaseInhibitor):
+    def __init__(self):
+        super().__init__()
+        self.bus = dbus.SessionBus()
+
+        self.__cookie = None
+
+    def inhibit(self, reason: str) -> None:
+        self.__proxy = self.bus.get_object(
+            "org.mate.ScreenSaver",
+            "/org/mate/ScreenSaver",
+        )
+        self.__proxy = dbus.Interface(
+            self.__proxy,
+            dbus_interface="org.mate.ScreenSaver",
+        )
+        self.__cookie = self.__proxy.Inhibit("Caffeine", reason)
+
+        self.running = True
+
+    def uninhibit(self) -> None:
+        if self.__cookie:
+            self.__proxy.UnInhibit(self.__cookie)
+        self.running = False
+
+    @property
+    def is_screen_inhibitor(self) -> bool:
+        return True
+
+    @property
+    def applicable(self) -> bool:
+        return "org.mate.ScreenSaver" in self.bus.list_names()
+
+
 class XdgScreenSaverInhibitor(BaseInhibitor):
     def __init__(self):
         super().__init__()
