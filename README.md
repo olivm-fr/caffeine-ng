@@ -49,6 +49,7 @@ it was undesirable.
 - Anything that implements the `org.freedesktop.ScreenSaver` API (this
 includes KDE, amongst others)
 - gnome-screensaver
+- mate-screensaver
 - XSS
 - Xorg + DPMS
 - xautolock
