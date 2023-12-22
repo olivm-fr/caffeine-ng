@@ -4,6 +4,7 @@
 
 import logging
 import os
+import subprocess
 import shutil
 import threading
 import time
@@ -201,7 +202,7 @@ class XssInhibitor(BaseInhibitor):
         def run(self):
             logging.info("Running XSS inhibitor thread.")
             while self.keep_running:
-                os.system("xscreensaver-command -deactivate")
+                subprocess.run(["xscreensaver-command", "-deactivate"])
                 time.sleep(50)
             logging.info("XSS inhibitor thread finishing.")
 
@@ -217,21 +218,21 @@ class XssInhibitor(BaseInhibitor):
     @property
     def applicable(self) -> bool:
         # TODO!
-        return os.system("pgrep xscreensaver") == 0
+        return subprocess.run(["pgrep", "xscreensaver"]).returncode == 0
 
 
 class DpmsInhibitor(BaseInhibitor):
     def inhibit(self, reason: str) -> None:
         self.running = True
 
-        os.system("xset -dpms")
+        subprocess.run(["xset", "-dpms"])
 
     def uninhibit(self) -> None:
         self.running = False
 
         # FIXME: Aren't we enabling it if it was never online?
         # Grep `xset q` for "DPMS is Enabled"
-        os.system("xset +dpms")
+        subprocess.run(["xset", "+dpms"])
 
     @property
     def is_screen_inhibitor(self) -> bool:
@@ -246,14 +247,14 @@ class DpmsInhibitor(BaseInhibitor):
 class XorgInhibitor(BaseInhibitor):
     def inhibit(self, reason: str) -> None:
         self.running = True
-        os.system("xset s off")
+        subprocess.run(["xset", "s", "off"])
 
     def uninhibit(self) -> None:
         self.running = False
 
         # FIXME: Aren't we enabling it if it was never online?
         # Scrensaver.*\n\s+timeout:  600
-        os.system("xset s on")
+        subprocess.run(["xset", "s", "on"])
 
     @property
     def applicable(self) -> bool:
@@ -264,15 +265,15 @@ class XorgInhibitor(BaseInhibitor):
 class XautolockInhibitor(BaseInhibitor):
     def inhibit(self, reason: str) -> None:
         self.running = True
-        os.system("xautolock -disable")
+        subprocess.run(["xautolock", "-disable"])
 
     def uninhibit(self) -> None:
         self.running = False
-        os.system("xautolock -enable")
+        subprocess.run(["xautolock", "-enable"])
 
     @property
     def applicable(self) -> bool:
-        return os.system("pgrep xautolock") == 0
+        return subprocess.run(["pgrep", "xautolock"]).returncode == 0
 
 
 class XfceInhibitor(BaseInhibitor):
@@ -282,18 +283,18 @@ class XfceInhibitor(BaseInhibitor):
     def inhibit(self, reason=None):  # "Inhibited via libcaffeine"):
         self.running = True
 
-        os.system(
-            "xfconf-query -c xfce4-power-manager"
-            "-p /xfce4-power-manager/presentation-mode -s true"
-        )
+        subprocess.run([
+            "xfconf-query", "-c", "xfce4-power-manager",
+            "-p", "/xfce4-power-manager/presentation-mode", "-s", "true",
+        ])
 
     def uninhibit(self):
         self.running = False
 
-        os.system(
-            "xfconf-query -c xfce4-power-manager"
-            "-p /xfce4-power-manager/presentation-mode -s false"
-        )
+        subprocess.run([
+            "xfconf-query", "-c", "xfce4-power-manager",
+            "-p", "/xfce4-power-manager/presentation-mode", "-s", "false",
+        ])
 
     @property
     def applicable(self):
@@ -304,12 +305,12 @@ class XfceInhibitor(BaseInhibitor):
 class XidlehookInhibitor(BaseInhibitor):
     def inhibit(self, reason: str) -> None:
         self.running = True
-        os.system("pkill -SIGSTOP xidlehook")
+        subprocess.run(["pkill", "-SIGSTOP", "xidlehook"])
 
     def uninhibit(self) -> None:
         self.running = False
-        os.system("pkill -SIGCONT xidlehook")
+        subprocess.run(["pkill", "-SIGCONT", "xidlehook"])
 
     @property
     def applicable(self) -> bool:
-        return os.system("pgrep xidlehook") == 0
+        return subprocess.run(["pgrep", "xidlehook"]).returncode == 0
