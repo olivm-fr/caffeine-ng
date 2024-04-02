@@ -1,0 +1,28 @@
+image: alpine/3.20
+packages:
+  - gtk+3.0-dev
+  - libayatana-appindicator-dev
+  - libnotify-dev
+  - meson
+  - py3-click
+  - py3-dbus-dev
+  - py3-ewmh
+  - py3-gobject3-dev
+  - py3-pulsectl
+  - py3-setproctitle
+  - python3-dev
+  - ruff
+  - scdoc
+sources:
+  - https://codeberg.org/WhyNotHugo/caffeine-ng/
+environment:
+  CI: true
+tasks:
+  - lint: |
+      cd caffeine-ng
+      ruff check --fix --exit-non-zero-on-fix
+      ruff format --diff
+  - build: |
+      cd caffeine-ng
+      meson build
+      meson compile -C build
