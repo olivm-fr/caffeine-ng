@@ -28,7 +28,7 @@ it was undesirable.
 
 ## Requirements
 
-- Python 3.6 or later is required (as of November 2023, 3.11 is known to work).
+- Python 3.8 or later (as of June 2024, 3.12 is the newest working version).
 - The following Python packages (the exact name will vary across distributions).
   - py3-click
   - py3-dbus

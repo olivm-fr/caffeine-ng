@@ -5,6 +5,7 @@ Changelog
 v4.3.0
 ------
 
+- Python 3.8 or later is required.
 - An MPRIS-based trigger is now available. This will set caffeine to inhibit
   based on the state of a currently running media player.
 - The pulseaudio integration is now disabled by default. It is deprecated and
