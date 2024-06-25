@@ -295,13 +295,12 @@ class Caffeine(GObject.GObject):
 
                 logger.info(f"{inhibitor} is applicable, state: {inhibitor.running}")
 
-        match self.desired_state:
-            case DesiredState.UNINHIBITED:
-                self.status_string = _("Caffeine is dormant; powersaving is enabled.")
-            case DesiredState.INHIBIT_SLEEP:
-                self.status_string = _("Caffeine is preventing sleep only.")
-            case DesiredState.INHIBIT_ALL:
-                self.status_string = _("Caffeine is preventing all powersaving.")
+        if self.desired_state == DesiredState.UNINHIBITED:
+            self.status_string = _("Caffeine is dormant; powersaving is enabled.")
+        elif self.desired_state == DesiredState.INHIBIT_SLEEP:
+            self.status_string = _("Caffeine is preventing sleep only.")
+        elif self.desired_state == DesiredState.INHIBIT_ALL:
+            self.status_string = _("Caffeine is preventing all powersaving.")
 
         if self.desired_state != DesiredState.UNINHIBITED:
             self.status_string = self.status_string + "\n" + self.reason

@@ -1,4 +1,5 @@
 """Triggers are different events or states that auto-activate caffeine."""
+
 import logging
 import os
 from abc import ABC
@@ -293,14 +294,13 @@ class MPRISTrigger(EventTrigger):
         ):
             return
         playback_status = str(changed_properties["PlaybackStatus"])
-        match playback_status:
-            case "Playing":
-                self._add_player(bus_name)
-            case ("Paused" | "Stopped"):
-                if bus_name in self.active_players:
-                    self._remove_player(bus_name)
-            case _:
-                raise Exception("That's not meant to happen...")
+        if playback_status == "Playing":
+            self._add_player(bus_name)
+        elif playback_status in ("Paused", "Stopped"):
+            if bus_name in self.active_players:
+                self._remove_player(bus_name)
+        else:
+            raise Exception("Invalid playback status")
 
     def update(self, trigger):
         self.reason = self.get_reason()

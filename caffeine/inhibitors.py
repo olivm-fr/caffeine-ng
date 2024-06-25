@@ -4,8 +4,8 @@
 
 import logging
 import os
-import subprocess
 import shutil
+import subprocess
 import threading
 import time
 from abc import ABC
@@ -283,18 +283,32 @@ class XfceInhibitor(BaseInhibitor):
     def inhibit(self, reason=None):  # "Inhibited via libcaffeine"):
         self.running = True
 
-        subprocess.run([
-            "xfconf-query", "-c", "xfce4-power-manager",
-            "-p", "/xfce4-power-manager/presentation-mode", "-s", "true",
-        ])
+        subprocess.run(
+            [
+                "xfconf-query",
+                "-c",
+                "xfce4-power-manager",
+                "-p",
+                "/xfce4-power-manager/presentation-mode",
+                "-s",
+                "true",
+            ]
+        )
 
     def uninhibit(self):
         self.running = False
 
-        subprocess.run([
-            "xfconf-query", "-c", "xfce4-power-manager",
-            "-p", "/xfce4-power-manager/presentation-mode", "-s", "false",
-        ])
+        subprocess.run(
+            [
+                "xfconf-query",
+                "-c",
+                "xfce4-power-manager",
+                "-p",
+                "/xfce4-power-manager/presentation-mode",
+                "-s",
+                "false",
+            ]
+        )
 
     @property
     def applicable(self):

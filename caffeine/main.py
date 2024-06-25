@@ -209,7 +209,7 @@ class GUI:
             process_manager=self.__process_manager,
             process_manager_audio=self.__process_manager_audio,
             on_toggle=self.on_activation_toggled,
-            **kwargs
+            **kwargs,
         )
 
         tooltip = self.__core.status_string
