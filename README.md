@@ -1,8 +1,5 @@
 # Caffeine-ng
 
-[![build status](https://ci.codeberg.org/api/badges/WhyNotHugo/caffeine-ng/status.svg)](https://ci.codeberg.org/WhyNotHugo/caffeine-ng/branches/main)
-[![licence](https://img.shields.io/pypi/l/caffeine-ng.svg)](https://codeberg.org/WhyNotHugo/caffeine-ng/src/branch/main/LICENCE)
-
 Caffeine is a little daemon that sits in your systray, and prevents the
 screensaver from showing up, or the system from going to sleep. It does so when
 an application is fullscreened (eg: youtube), or when you click on the systray
