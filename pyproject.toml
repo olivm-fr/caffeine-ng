@@ -1,4 +1,7 @@
 [tool.ruff]
+target-version = "py37"
+
+[tool.ruff.lint]
 select = [
     "E",
     "F",
@@ -14,9 +17,8 @@ select = [
     "SIM",
     "TID",
 ]
-target-version = "py37"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 force-single-line = true
 
 [tool.mypy]
