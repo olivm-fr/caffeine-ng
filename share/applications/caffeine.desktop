@@ -6,6 +6,6 @@ Comment=Temporarily deactivate the screensaver and sleep mode
 Exec=caffeine
 Terminal=false
 Type=Application
-Categories=Utility;TrayIcon;DesktopUtility
+Categories=Utility;TrayIcon
 Keywords=Screensaver,Power,DPMS,Blank,Idle
 StartupNotify=false
