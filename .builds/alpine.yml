@@ -8,6 +8,7 @@ packages:
   - py3-dbus-dev
   - py3-ewmh
   - py3-gobject3-dev
+  - py3-mypy
   - py3-pulsectl
   - py3-setproctitle
   - python3-dev
@@ -22,6 +23,7 @@ tasks:
       cd caffeine-ng
       ruff check --fix --exit-non-zero-on-fix
       ruff format --diff
+      mypy .
   - build: |
       cd caffeine-ng
       meson build
