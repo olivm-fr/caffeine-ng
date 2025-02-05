@@ -35,6 +35,7 @@ from caffeine.inhibitors import MateScreenSaverInhibitor
 from caffeine.inhibitors import XautolockInhibitor
 from caffeine.inhibitors import XdgPowerManagmentInhibitor
 from caffeine.inhibitors import XdgScreenSaverInhibitor
+from caffeine.inhibitors import KdeScreenSaverInhibitor
 from caffeine.inhibitors import XfceInhibitor
 from caffeine.inhibitors import XidlehookInhibitor
 from caffeine.inhibitors import XorgInhibitor
@@ -86,6 +87,7 @@ class Caffeine(GObject.GObject):
             XfceInhibitor(),
             XidlehookInhibitor(),
             XdgScreenSaverInhibitor(),
+            KdeScreenSaverInhibitor(),
             DpmsInhibitor(),
             MateScreenSaverInhibitor(),
         ]

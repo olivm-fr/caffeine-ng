@@ -131,6 +131,53 @@ class MateScreenSaverInhibitor(BaseInhibitor):
         return "org.mate.ScreenSaver" in self.bus.list_names()
 
 
+class KdeScreenSaverInhibitor(BaseInhibitor):
+    class KdeInhibitorThread(threading.Thread):
+        keep_running = True
+        daemon = True
+        def __init__(self, proxy):
+            super().__init__()
+            self.__proxy = proxy
+
+        def run(self):
+            logging.info("Running KDE inhibitor thread.")
+            while self.keep_running:
+                self.__proxy.SimulateUserActivity()
+                time.sleep(50)
+            logging.info("KDE inhibitor thread finishing.")
+
+    def __init__(self):
+        super().__init__()
+        self.bus = dbus.SessionBus()
+
+    def inhibit(self, reason: str) -> None:
+        self.__proxy = self.bus.get_object(
+            "org.freedesktop.ScreenSaver",
+            "/ScreenSaver",
+        )
+        self.__proxy = dbus.Interface(
+            self.__proxy,
+            dbus_interface="org.freedesktop.ScreenSaver",
+        )
+
+        self.running = True
+        self.thread = KdeScreenSaverInhibitor.KdeInhibitorThread(self.__proxy)
+        self.thread.start()
+
+    def uninhibit(self) -> None:
+        self.running = False
+        self.thread.keep_running = False
+
+    @property
+    def applicable(self) -> bool:
+        return subprocess.run(["pgrep", "-f", "org_kde_powerdevil"], stdout=subprocess.DEVNULL).returncode == 0
+
+    @property
+    def is_screen_inhibitor(self) -> bool:
+        return True
+
+
+
 class XdgScreenSaverInhibitor(BaseInhibitor):
     def __init__(self):
         super().__init__()
@@ -162,7 +209,7 @@ class XdgScreenSaverInhibitor(BaseInhibitor):
 
     @property
     def applicable(self) -> bool:
-        return "org.freedesktop.ScreenSaver" in self.bus.list_names()
+        return "org.freedesktop.ScreenSaver" in self.bus.list_names() and subprocess.run(["pgrep", "-f", "org_kde_powerdevil"], stdout=subprocess.DEVNULL).returncode != 0
 
 
 class XdgPowerManagmentInhibitor(BaseInhibitor):
@@ -191,7 +238,7 @@ class XdgPowerManagmentInhibitor(BaseInhibitor):
 
     @property
     def applicable(self) -> bool:
-        return "org.freedesktop.PowerManagement" in self.bus.list_names()
+        return "org.freedesktop.PowerManagement" in self.bus.list_names() and subprocess.run(["pgrep", "-f", "org_kde_powerdevil"], stdout=subprocess.DEVNULL).returncode != 0
 
 
 class XssInhibitor(BaseInhibitor):
@@ -313,7 +360,7 @@ class XfceInhibitor(BaseInhibitor):
     @property
     def applicable(self):
         # If `xfconf-query` is absent, this is not applicable.
-        return shutil.which("xfconf-query") is not None
+        return shutil.which("xfconf-query") is not None and subprocess.run(["pgrep", "-f", "org_kde_powerdevil"], stdout=subprocess.DEVNULL).returncode != 0
 
 
 class XidlehookInhibitor(BaseInhibitor):
