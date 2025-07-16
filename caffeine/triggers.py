@@ -292,8 +292,14 @@ class MPRISTrigger(EventTrigger):
             interface_name != "org.mpris.MediaPlayer2.Player"
             or "PlaybackStatus" not in changed_properties
         ):
-            return
+            #logger.debug(f"ignoring status change {interface_name} {changed_properties.keys()}")
+            if interface_name == "org.mpris.MediaPlayer2.Player" and "Metadata" in changed_properties and "xesam:url" in changed_properties["Metadata"] and len(changed_properties["Metadata"]["xesam:url"]) > 0:
+                logger.debug("Force playing")
+                changed_properties["PlaybackStatus"] = "Playing"
+            else:
+                return
         playback_status = str(changed_properties["PlaybackStatus"])
+        #logger.debug(f"playback_status {playback_status}")
         if playback_status == "Playing":
             self._add_player(bus_name)
         elif playback_status in ("Paused", "Stopped"):
